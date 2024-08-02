@@ -1,0 +1,3 @@
+/home/pardusumsu/code/opencvTracker/cmake-build-debug/CMakeFiles/opencvTracker.dir
+/home/pardusumsu/code/opencvTracker/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/pardusumsu/code/opencvTracker/cmake-build-debug/CMakeFiles/rebuild_cache.dir
