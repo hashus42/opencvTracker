@@ -4,11 +4,16 @@ import cv2 as cv
 tracker = cv.TrackerCSRT_create()
 
 cap = cv.VideoCapture(0)
+if not cap.isOpened():
+    raise IOError('Video could not be opened')
 _, frame = cap.read()
 frame = cv.flip(frame, 1)
 
 # program stops here and wit for to input as drawing rectangle
-roi = cv.selectROI("tracker", frame)
+if frame is not None:
+    roi = cv.selectROI("tracker", frame)
+else:
+    raise ValueError("Error: Frame is empty or invalid")
 tracker.init(frame, roi)
 
 while True:
