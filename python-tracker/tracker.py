@@ -1,13 +1,13 @@
 import os
 import cv2 as cv
 
-
 # init tracker
 tracker = cv.TrackerCSRT_create()
 
 cap = cv.VideoCapture(0)
 if not cap.isOpened():
     raise IOError('Video could not be opened')
+
 
 # relative path to exact path
 def resource_path(relative):
@@ -21,6 +21,7 @@ def resource_path(relative):
 
 
 detected = False
+success = False
 while True:
     _, frame = cap.read()
     frame = cv.flip(frame, 1)
@@ -41,22 +42,28 @@ while True:
 
         if amount_found != 0:
             roi = tuple(roi.flatten())
+            try:
+                tracker.init(frame, roi)
+                detected = True
+            except Exception as e:
+                print(e)
 
-            tracker.init(frame, roi)
-            detected = True
-    
     elif detected:
         success, roi = tracker.update(frame)
         roi = tuple(int(i) for i in roi)
-
         if success:
             cv.rectangle(frame, roi, (0, 255, 0), 2)
+        else:
+            # detected = False
+            pass
 
     fps = cv.getTickFrequency() / (cv.getTickCount() - start)
 
     # show pfs
     cv.putText(frame, f"FPS: {round(fps)}", (10, 30),
-               cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+               cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+    cv.putText(frame, "Detected" if success else "No Detection", (10, 50),
+               cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0) if success else (255, 0, 0))
 
     cv.imshow("tracker", frame)
 
