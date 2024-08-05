@@ -1,9 +1,6 @@
 import os
 import cv2 as cv
 
-# init tracker
-tracker = cv.TrackerCSRT_create()
-
 cap = cv.VideoCapture(0)
 if not cap.isOpened():
     raise IOError('Video could not be opened')
@@ -42,20 +39,29 @@ while True:
 
         if amount_found != 0:
             roi = tuple(roi.flatten())
+            rois = tuple(roi[i:i+4] for i in range(0, len(roi), 4))
             try:
-                tracker.init(frame, roi)
+                trackers = []
+                for i in range(len(rois)):
+                    roi = rois[i]
+                    print(roi)
+                    tracker = cv.TrackerCSRT_create()
+                    trackers.append(tracker)
+                    trackers[i].init(frame, roi)
                 detected = True
             except Exception as e:
                 print(e)
 
     elif detected:
-        success, roi = tracker.update(frame)
-        roi = tuple(int(i) for i in roi)
-        if success:
-            cv.rectangle(frame, roi, (0, 255, 0), 2)
-        else:
-            # detected = False
-            pass
+        for i in range(len(rois)):
+            roi = rois[i]
+            success, roi = trackers[i].update(frame)
+            roi = tuple(int(i) for i in roi)
+            if success:
+                cv.rectangle(frame, roi, (0, 255, 0), 2)
+            else:
+                # detected = False
+                pass
 
     fps = cv.getTickFrequency() / (cv.getTickCount() - start)
 
