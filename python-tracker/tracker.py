@@ -6,17 +6,23 @@ cap = cv.VideoCapture(0)
 if not cap.isOpened():
     raise IOError('Video could not be opened')
 
-detected = False
-gotBox = False
-detByCascade = False
-mouseDown = False
-mouseUp = False
-drawBox = np.zeros(4)
-start_x = 0
-start_y = 0
-initialized = False
-rois = ()
-trackers = []
+def reset():
+    global detected, gotBox, detByCascade, mouseDown, mouseUp, drawBox,\
+        start_x, start_y, track_initialized, rois, trackers
+    detected = False
+    gotBox = False
+    detByCascade = False
+    mouseDown = False
+    mouseUp = False
+    drawBox = np.zeros(4)
+    start_x = 0
+    start_y = 0
+    track_initialized = False
+    rois = ()
+    trackers = []
+
+
+reset()
 
 
 # relative path to exact path
@@ -34,8 +40,7 @@ def resource_path(relative):
 
 
 def on_mouse(event, x, y, flags, param):
-    global mouseDown, mouseUp, start_x, start_y, roi, initialized, drawBox
-
+    global mouseDown, mouseUp, start_x, start_y, roi, track_initialized, drawBox
     if event == cv.EVENT_LBUTTONDOWN:
         mouseDown = True
         mouseUp = False
@@ -57,7 +62,7 @@ def on_mouse(event, x, y, flags, param):
     elif event == cv.EVENT_LBUTTONUP:
         mouseDown = False
         mouseUp = True
-        initialized = True
+        track_initialized = True
 
 
 while True:
@@ -65,6 +70,10 @@ while True:
     frame = cv.flip(frame, 1)
     frame_process = frame.copy()
     start = cv.getTickCount()
+
+    if mouseDown:
+        cv.rectangle(frame, drawBox, (0, 255, 0), 2)
+
     # This should be run in every bunch of second
     if not detected:
         if frame is not None:
@@ -75,13 +84,13 @@ while True:
             # if haar cascade detect any thing
             if len(detectedBox) > 0:
                 roi = detectedBox
-                initialized = True
+                track_initialized = True
                 detected = True
                 detByCascade = True
         else:
             raise ValueError("Error: Frame is empty or invalid")
 
-    if initialized:
+    if track_initialized:
         if detByCascade:
             roi = tuple(roi.flatten())
             rois += tuple(roi[i:i + 4] for i in range(0, len(roi), 4))
@@ -99,7 +108,7 @@ while True:
                 trackers[i].init(frame_process, roi)
         except Exception as e:
             print(e)
-        initialized = False
+        track_initialized = False
 
     if gotBox:
         for i in range(len(rois)):
@@ -126,5 +135,7 @@ while True:
     cv.setMouseCallback("tracker", on_mouse)
 
     key = cv.waitKey(1)
-    if key == ord('q') or key == 27:
+    if key == 27:
         break
+    elif key == ord('q'):
+        reset()
