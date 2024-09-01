@@ -1,10 +1,12 @@
 import os
 import cv2 as cv
 import numpy as np
+from ultralytics import YOLO
 
 cap = cv.VideoCapture(0)
 if not cap.isOpened():
     raise IOError('Video could not be opened')
+
 
 def reset():
     global detected, gotBox, detByCascade, mouseDown, mouseUp, drawBox,\
@@ -65,6 +67,8 @@ def on_mouse(event, x, y, flags, param):
         track_initialized = True
 
 
+model = YOLO("best.pt")
+
 while True:
     _, frame = cap.read()
     frame = cv.flip(frame, 1)
@@ -72,17 +76,25 @@ while True:
     start = cv.getTickCount()
 
     if mouseDown:
-        cv.rectangle(frame, drawBox, (0, 255, 0), 2)
+        drawBox = [int(i) for i in drawBox]
+        pt1 = (drawBox[0], drawBox[1])
+        pt2 = (drawBox[0] + drawBox[2], drawBox[1] + drawBox[3])
+        cv.rectangle(frame, pt1, pt2, (0, 255, 0), 2)
 
     # This should be run in every bunch of second
     if not detected:
         if frame is not None:
-            frame_gray = cv.cvtColor(frame_process, cv.COLOR_BGR2GRAY)
-            frame_rgb = cv.cvtColor(frame_process, cv.COLOR_BGR2RGB)
-            stop_haarcascade = cv.CascadeClassifier(resource_path('stop_data.xml'))
-            detectedBox = stop_haarcascade.detectMultiScale(frame_gray, 1.3, 5)
+            # frame_gray = cv.cvtColor(frame_process, cv.COLOR_BGR2GRAY)
+            # frame_rgb = cv.cvtColor(frame_process, cv.COLOR_BGR2RGB)
+            # stop_haarcascade = cv.CascadeClassifier(resource_path('stop_data.xml'))
+            # detectedBox = stop_haarcascade.detectMultiScale(frame_gray, 1.3, 5)
+            results = model.predict(source=frame, save=False)
+            print(f"class: {results.boxs.cls}\nconf: {results.boxs.cls}") # broken
+            detectedBox = results[0].boxes.xyxy.cpu().numpy().astype(int)
             # if haar cascade detect any thing
             if len(detectedBox) > 0:
+                detectedBox[0][2] = detectedBox[0][2] - detectedBox[0][0]
+                detectedBox[0][3] = detectedBox[0][3] - detectedBox[0][1]
                 roi = detectedBox
                 track_initialized = True
                 detected = True
@@ -97,7 +109,7 @@ while True:
             gotBox = True
             detByCascade = False
         else:
-            roi = tuple(drawBox.flatten())
+            roi = tuple(drawBox)
             rois = rois + (roi,)
             gotBox = True
         try:
