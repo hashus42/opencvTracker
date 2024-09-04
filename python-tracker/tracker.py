@@ -89,7 +89,7 @@ while True:
             # stop_haarcascade = cv.CascadeClassifier(resource_path('stop_data.xml'))
             # detectedBox = stop_haarcascade.detectMultiScale(frame_gray, 1.3, 5)
             results = model.predict(source=frame, save=False)
-            print(f"class: {results.boxs.cls}\nconf: {results.boxs.cls}") # broken
+            # print(f"class: {results.boxs.cls}\nconf: {results.boxs.cls}") # broken
             detectedBox = results[0].boxes.xyxy.cpu().numpy().astype(int)
             # if haar cascade detect any thing
             if len(detectedBox) > 0:
